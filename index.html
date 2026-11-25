@@ -1006,7 +1006,6 @@
             <button type="button" class="chip-btn" onclick="applyFilenamePrefix('Surat')">+ Surat_</button>
             <button type="button" class="chip-btn" onclick="applyFilenamePrefix('KTP')">+ KTP_</button>
             <button type="button" class="chip-btn" onclick="applyFilenamePrefix('Laporan')">+ Laporan_</button>
-            <button type="button" class="chip-btn" onclick="applyFolderAsPrefix()">📁 Nama Folder</button>
           </div>
           <div class="form-hint">Ekstensi <code>.pdf</code> akan ditambahkan otomatis jika belum ada.</div>
         </div>
@@ -1055,7 +1054,8 @@
         </div>
 
         <div id="pdf-size-estimate" class="size-estimate-box">
-          <span>Estimasi ukuran PDF: <strong id="pdf-size-est-value">0 KB</strong> (<span id="pdf-size-est-pages">0</span> hal)</span>
+          <span>Estimasi ukuran PDF: <strong id="pdf-size-est-value">0 KB</strong> (<span
+              id="pdf-size-est-pages">0</span> hal)</span>
           <span id="pdf-size-est-note"></span>
         </div>
 
@@ -1082,7 +1082,8 @@
           <button type="button" class="btn btn-outline btn-sm" onclick="startNewScan()">Buat Dokumen Baru</button>
         </div>
       </div>
-      <div id="offline-queue-card" class="card" style="display:none; border-color: var(--warning); background: #FFFBEB;">
+      <div id="offline-queue-card" class="card"
+        style="display:none; border-color: var(--warning); background: #FFFBEB;">
         <div class="card-title" style="color:#92400E;">
           <span>📤 Antrean Upload Offline (<span id="offline-queue-count">0</span>)</span>
           <button type="button" id="btn-sync-offline" class="btn btn-primary btn-sm" onclick="syncOfflineQueue()">
@@ -1238,7 +1239,8 @@
         <h2 id="crop-modal-title" class="modal-title">✂️ Potong (Crop) Foto</h2>
         <button type="button" class="modal-close" onclick="closeCropModal()" aria-label="Tutup">&times;</button>
       </div>
-      <div class="form-hint" style="margin-bottom:8px;">Seret area pada gambar untuk memilih bagian dokumen yang ingin disimpan.</div>
+      <div class="form-hint" style="margin-bottom:8px;">Seret area pada gambar untuk memilih bagian dokumen yang ingin
+        disimpan.</div>
       <div class="crop-stage">
         <canvas id="crop-canvas"></canvas>
       </div>
@@ -1383,7 +1385,7 @@
     function updateModeBadge() {
       const badge = document.getElementById('mode-badge');
       const warnBanner = document.getElementById('gas-warning-banner');
-      const baseLabel = isPreviewMode() ? 'Preview Mode' : 'Terhubung GAS';
+      const baseLabel = isPreviewMode() ? 'Preview Mode' : 'ᴅᴇᴅᴇ s';
       if (isPreviewMode()) {
         warnBanner.style.display = 'block';
       } else {
@@ -1394,7 +1396,7 @@
         badge.title = 'Buka Pengaturan (Admin Aktif)';
       } else {
         badge.textContent = baseLabel;
-        badge.title = 'Klik untuk Login Admin & buka Pengaturan';
+        badge.title = 'ˡᵒᵍⁱⁿ';
       }
     }
 
