@@ -1,0 +1,25 @@
+{
+  "name": "ScanPDF Drive — Foto ke PDF Google Drive",
+  "short_name": "ScanPDF Drive",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#1E40AF",
+  "description": "Ambil foto dokumen dengan kamera, gabungkan menjadi PDF, dan simpan langsung ke folder Google Drive tanpa login.",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iIzFFNDBBRiIvPjxwYXRoIGQ9Ik0xMzYgMTY4aDUybDI0LTM2aDg4bDI0IDM2aDUyYTQwIDQwIDAgMCAxIDQwIDQwdjE2OGE0MCA0MCAwIDAgMS00MCA0MEgxMzZhNDAgNDAgMCAwIDEtNDAtNDBWMjA4YTQwIDQwIDAgMCAxIDQwLTQweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjI4IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjg4IiByPSI2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjI4Ii8+PC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iIzFFNDBBRiIvPjxwYXRoIGQ9Ik0xMzYgMTY4aDUybDI0LTM2aDg4bDI0IDM2aDUyYTQwIDQwIDAgMCAxIDQwIDQwdjE2OGE0MCA0MCAwIDAgMS00MCA0MEgxMzZhNDAgNDAgMCAwIDEtNDAtNDBWMjA4YTQwIDQwIDAgMCAxIDQwLTQweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjI4IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjg4IiByPSI2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjI4Ii8+PC9zdmc+",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
