@@ -346,6 +346,15 @@
       gap: 10px;
     }
 
+    .camera-controls .btn {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      line-height: 1.25;
+      text-align: center;
+    }
+
     .camera-live-controls {
       display: none;
       position: absolute;
@@ -669,6 +678,10 @@
         aspect-ratio: 16 / 10;
       }
 
+      .camera-controls {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
       .toast {
         bottom: 24px;
       }
@@ -958,12 +971,12 @@
           <button type="button" class="btn btn-outline" onclick="document.getElementById('file-gallery-input').click()">
             🖼️ Pilih dari Galeri
           </button>
-        </div>
-
-        <div style="margin-top:10px;">
-          <button type="button" class="btn btn-outline btn-block btn-sm"
+          <button type="button" class="btn btn-outline"
             onclick="document.getElementById('file-native-cam-input').click()">
-            📸 Gunakan Aplikasi Kamera Bawaan HP
+            📸 Kamera Bawaan HP
+          </button>
+          <button type="button" class="btn btn-outline" onclick="startNewScan(true)">
+            🆕 Buat Dokumen Baru
           </button>
         </div>
 
@@ -2393,12 +2406,15 @@
       }
     }
 
-    function startNewScan() {
+    function startNewScan(notify = false) {
       photos = [];
       renderPhotoQueue();
       setDefaultFilename();
       document.getElementById('upload-result-card').style.display = 'none';
       switchTab('view-camera');
+      if (notify) {
+        showToast('Siap membuat dokumen baru.');
+      }
     }
 
     // =========================================================================
@@ -2491,6 +2507,10 @@
             folders = folders.filter((f) => f.id !== payload);
             localStorage.setItem('preview_folders', JSON.stringify(folders));
             resolve({ success: true, folders });
+          } else if (fnName === 'deleteHistoryItem') {
+            historyList = historyList.filter((h) => h.id !== payload.id);
+            localStorage.setItem('preview_history', JSON.stringify(historyList));
+            resolve({ success: true, history: historyList });
           }
         }, 300);
       });
@@ -2617,10 +2637,28 @@
           <div class="history-actions">
             <a href="${escapeHtml(item.driveLink)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Buka Drive</a>
             <button type="button" class="btn btn-outline btn-sm" onclick="copyText('${escapeHtml(item.driveLink)}')">Salin Link</button>
+            <button type="button" class="btn btn-danger-soft btn-sm" onclick="deleteHistoryItem('${escapeHtml(item.id)}', '${escapeHtml(item.fileId || '')}', '${escapeHtml(item.fileName)}')">🗑️ Hapus</button>
           </div>
         `;
         container.appendChild(el);
       });
+    }
+
+    async function deleteHistoryItem(recordId, fileId, fileName) {
+      if (!confirm(`Hapus riwayat "${fileName}"? File di Google Drive juga akan dipindahkan ke Sampah jika tersedia.`)) {
+        return;
+      }
+      try {
+        const res = await callBackend('deleteHistoryItem', { id: recordId, fileId });
+        if (!res || !res.success) {
+          throw new Error((res && res.message) || 'Gagal menghapus riwayat.');
+        }
+        historyList = res.history || historyList.filter((h) => h.id !== recordId);
+        renderHistoryList();
+        showToast(`Riwayat "${fileName}" berhasil dihapus.`);
+      } catch (err) {
+        showToast(err.message || 'Gagal menghapus riwayat.');
+      }
     }
 
     async function addFolderPreset() {
