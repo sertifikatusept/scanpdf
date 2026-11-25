@@ -1,13 +1,16 @@
-const CACHE_NAME = 'scanpdf-drive-static-v1';
+const CACHE_NAME = 'scanpdf-drive-static-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(ASSETS_TO_CACHE.map((url) => cache.add(url).catch(() => null)))
+    )
   );
   self.skipWaiting();
 });
