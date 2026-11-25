@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1E40AF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ScanPDF Drive">
+  <title>ScanPDF Drive — Foto ke PDF Google Drive</title>
+
+  <!-- Web App Manifest (GitHub Pages / Vercel) -->
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- jsPDF untuk konversi gambar ke PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-hover: #1D4ED8;
+      --primary-light: #DBEAFE;
+      --accent: #059669;
+      --accent-light: #D1FAE5;
+      --danger: #DC2626;
+      --danger-light: #FEE2E2;
+      --warning: #D97706;
+      --warning-light: #FEF3C7;
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --radius: 14px;
+      --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+      --nav-height: 68px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: calc(var(--nav-height) + 20px);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 60%, #2563EB 100%);
+      color: #FFFFFF;
+      padding: 14px 16px;
+      box-shadow: 0 2px 12px rgba(30, 64, 175, 0.25);
+    }
+
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-text p {
+      font-size: 0.75rem;
+      opacity: 0.85;
+    }
+
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-mode {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .badge-offline {
+      display: none;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--warning);
+      color: #FFFFFF;
+    }
+
+    /* Install Banner */
+    .install-banner {
+      display: none;
+      background: #EFF6FF;
+      border-bottom: 1px solid #BFDBFE;
+      padding: 10px 16px;
+    }
+
+    .install-banner-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .install-banner-text {
+      font-size: 0.84rem;
+      color: #1E3A8A;
+      font-weight: 500;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Desktop Top Tabs */
+    .desktop-tabs {
+      display: none;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: var(--surface);
+      padding: 6px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .desktop-tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.18s ease;
+    }
+
+    .desktop-tab-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    /* Views */
+    .view-section {
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: 11px;
+      padding: 11px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      text-decoration: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #FFFFFF;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      background: #047857;
+    }
+
+    .btn-outline {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #F1F5F9;
+    }
+
+    .btn-danger-soft {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* Camera Area */
+    .camera-box {
+      position: relative;
+      width: 100%;
+      background: #0F172A;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 3 / 4;
+      max-height: 460px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .camera-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .camera-placeholder {
+      text-align: center;
+      color: #CBD5E1;
+      padding: 24px;
+    }
+
+    .camera-placeholder p {
+      font-size: 0.88rem;
+      margin-top: 8px;
+      color: #94A3B8;
+    }
+
+    .camera-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .camera-live-controls {
+      display: none;
+      position: absolute;
+      bottom: 14px;
+      left: 0;
+      right: 0;
+      padding: 0 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .shutter-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 4px solid rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      transition: transform 0.1s ease;
+    }
+
+    .shutter-btn:active {
+      transform: scale(0.92);
+    }
+
+    .cam-icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(15, 23, 42, 0.68);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Photo Queue Grid */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .photo-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #F8FAFC;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .photo-thumb-wrap {
+      position: relative;
+      aspect-ratio: 3 / 4;
+      background: #E2E8F0;
+      overflow: hidden;
+    }
+
+    .photo-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .page-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(15, 23, 42, 0.78);
+      color: #FFFFFF;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .photo-actions {
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 4px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border);
+    }
+
+    .photo-act-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .photo-act-btn:hover {
+      background: #F1F5F9;
+      color: var(--text);
+    }
+
+    .photo-act-btn.del:hover {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      background: #FFFFFF;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    .form-hint {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Alert Box */
+    .alert-box {
+      background: var(--warning-light);
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* History List */
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #FFFFFF;
+    }
+
+    .history-info h4 {
+      font-size: 0.94rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .history-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Folder Item */
+    .folder-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge-default {
+      background: var(--accent-light);
+      color: #065F46;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+    }
+
+    /* Bottom Navigation (Mobile) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+      box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    .nav-btn {
+      flex: 1;
+      height: 100%;
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: 8px;
+      right: calc(50% - 20px);
+      background: var(--primary);
+      color: #FFFFFF;
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0F172A;
+      color: #FFFFFF;
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 28px 16px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding-bottom: 24px;
+      }
+
+      .bottom-nav {
+        display: none;
+      }
+
+      .desktop-tabs {
+        display: flex;
+      }
+
+      .camera-box {
+        aspect-ratio: 16 / 10;
+      }
+
+      .toast {
+        bottom: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>ScanPDF Drive</h1>
+          <p>Foto ke PDF &amp; Simpan ke Google Drive</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span id="offline-badge" class="badge-offline">OFFLINE</span>
+        <span id="mode-badge" class="badge-mode" onclick="switchTab('view-folders')"
+          title="Klik untuk atur koneksi GAS">Preview Mode</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Banner Install PWA -->
+  <div id="install-banner" class="install-banner">
+    <div class="install-banner-inner">
+      <span class="install-banner-text">Pasang <strong>ScanPDF Drive</strong> di layar utama agar lebih cepat
+        dibuka.</span>
+      <div style="display:flex; gap:8px;">
+        <button id="btn-install-pwa" class="btn btn-primary btn-sm">Install Aplikasi</button>
+        <button id="btn-dismiss-install" class="btn btn-outline btn-sm">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <div id="gas-warning-banner" class="alert-box">
+      <strong>Mode Preview Aktif:</strong> URL Web App Google Apps Script belum diatur. File belum tersimpan ke Google
+      Drive asli. Buka tab <strong>Pengaturan</strong> untuk menempelkan URL Web App GAS Anda.
+    </div>
+
+    <!-- Desktop Tabs -->
+    <div class="desktop-tabs">
+      <button class="desktop-tab-btn active" data-tab="view-camera" onclick="switchTab('view-camera')">
+        📷 Ambil Foto
+      </button>
+      <button class="desktop-tab-btn" data-tab="view-pdf" onclick="switchTab('view-pdf')">
+        📄 Simpan PDF (<span class="count-label">0</span>)
+      </button>
+      <button class="desktop-tab-btn" data-tab="view-history" onclick="switchTab('view-history')">
+        🗂️ Riwayat Drive
+      </button>
+      <button class="desktop-tab-btn" data-tab="view-folders" onclick="switchTab('view-folders')">
+        ⚙️ Pengaturan
+      </button>
+    </div>
+
+    <!-- VIEW 1: KAMERA / SCAN FOTO -->
+    <section id="view-camera" class="view-section active">
+      <div class="card">
+        <div class="card-title">
+          <span>Ambil Foto Dokumen</span>
+          <span style="font-size:0.8rem; color:var(--text-muted);" id="photo-counter-text">0 halaman</span>
+        </div>
+
+        <div class="camera-box" id="camera-box">
+          <video id="camera-video" autoplay playsinline muted></video>
+          <div id="camera-placeholder" class="camera-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <p>Klik <strong>Buka Kamera</strong> untuk memotret langsung (HTTPS GitHub/Vercel) atau pilih foto dari
+              galeri.</p>
+          </div>
+
+          <div class="camera-live-controls" id="camera-live-controls">
+            <button type="button" class="cam-icon-btn" onclick="switchCameraFacing()" title="Ganti Kamera">🔄</button>
+            <button type="button" class="shutter-btn" onclick="captureFromVideo()" title="Ambil Foto"></button>
+            <button type="button" class="cam-icon-btn" onclick="stopCamera()" title="Tutup Kamera">✕</button>
+          </div>
+        </div>
+
+        <div class="camera-controls">
+          <button type="button" id="btn-start-cam" class="btn btn-primary" onclick="startCamera()">
+            📷 Buka Kamera
+          </button>
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('file-gallery-input').click()">
+            🖼️ Pilih dari Galeri
+          </button>
+        </div>
+
+        <div style="margin-top:10px;">
+          <button type="button" class="btn btn-outline btn-block btn-sm"
+            onclick="document.getElementById('file-native-cam-input').click()">
+            📸 Atau Gunakan Aplikasi Kamera Bawaan HP
+          </button>
+        </div>
+
+        <input type="file" id="file-gallery-input" accept="image/*" multiple style="display:none;"
+          onchange="handleFileSelect(event)">
+        <input type="file" id="file-native-cam-input" accept="image/*" capture="environment" style="display:none;"
+          onchange="handleFileSelect(event)">
+      </div>
+
+      <!-- Daftar Halaman Foto -->
+      <div class="card">
+        <div class="card-title">
+          <span>Daftar Halaman Foto</span>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="clearAllPhotos()" id="btn-clear-photos"
+              style="display:none;">Hapus Semua</button>
+            <button type="button" class="btn btn-accent btn-sm" onclick="switchTab('view-pdf')" id="btn-next-pdf"
+              style="display:none;">Lanjut ke PDF →</button>
+          </div>
+        </div>
+        <div id="photo-queue-container">
+          <div class="empty-state">Belum ada foto yang diambil. Anda bisa mengambil beberapa foto untuk digabung menjadi
+            1 file PDF.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: KONVERSI PDF & SIMPAN KE GOOGLE DRIVE -->
+    <section id="view-pdf" class="view-section">
+      <div class="card">
+        <div class="card-title">
+          <span>Konfigurasi PDF &amp; Folder Google Drive</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pdf-filename">Nama File PDF</label>
+          <input type="text" id="pdf-filename" class="form-control" placeholder="Contoh: Laporan_Foto_2026">
+          <div class="form-hint">Ekstensi <code>.pdf</code> akan ditambahkan otomatis jika belum ada.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="drive-folder-select">Folder Tujuan Google Drive</label>
+          <select id="drive-folder-select" class="form-control" onchange="onFolderSelectChange()">
+            <option value="">-- Memuat daftar folder... --</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="manual-folder-group" style="display:none;">
+          <label class="form-label" for="manual-folder-input">ID Folder atau Link Folder Google Drive</label>
+          <input type="text" id="manual-folder-input" class="form-control"
+            placeholder="Tempel Link Folder Drive atau Folder ID di sini">
+          <div class="form-hint">Contoh: <code>https://drive.google.com/drive/folders/1AbC...</code> atau langsung
+            ID-nya.</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="pdf-paper-size">Ukuran Kertas</label>
+            <select id="pdf-paper-size" class="form-control">
+              <option value="a4" selected>A4 (Standar)</option>
+              <option value="letter">Letter</option>
+              <option value="fit">Sesuai Ukuran Foto</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pdf-orientation">Orientasi</label>
+            <select id="pdf-orientation" class="form-control">
+              <option value="auto" selected>Otomatis (Ikuti Foto)</option>
+              <option value="portrait">Portrait (Tegak)</option>
+              <option value="landscape">Landscape (Mendatar)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pdf-quality">Kualitas Gambar PDF</label>
+          <select id="pdf-quality" class="form-control">
+            <option value="0.92">Tinggi (Jernih, ukuran lebih besar)</option>
+            <option value="0.78" selected>Sedang (Direkomendasikan)</option>
+            <option value="0.55">Ringan (Hemat kuota &amp; cepat)</option>
+          </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+          <button type="button" id="btn-save-drive" class="btn btn-primary btn-block"
+            onclick="generateAndSaveToDrive()">
+            ☁️ Konversi &amp; Simpan ke Google Drive
+          </button>
+          <button type="button" id="btn-download-local" class="btn btn-outline btn-block"
+            onclick="generateAndDownloadLocal()">
+            ⬇️ Unduh PDF ke Perangkat Saja
+          </button>
+        </div>
+      </div>
+
+      <div id="upload-result-card" class="card" style="display:none; border-color: var(--accent); background: #F0FDF4;">
+        <div class="card-title" style="color:#065F46;">
+          <span>✅ Berhasil Disimpan ke Google Drive</span>
+        </div>
+        <p id="upload-result-text" style="font-size:0.9rem; margin-bottom:12px; color:#064E3B;"></p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <a id="upload-result-link" href="#" target="_blank" rel="noopener" class="btn btn-accent btn-sm">Buka File di
+            Drive</a>
+          <button type="button" class="btn btn-outline btn-sm" onclick="startNewScan()">Buat Dokumen Baru</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: RIWAYAT DRIVE -->
+    <section id="view-history" class="view-section">
+      <div class="card">
+        <div class="card-title">
+          <span>Riwayat PDF Tersimpan</span>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadInitialData()">🔄 Muat Ulang</button>
+        </div>
+        <div id="history-list-container">
+          <div class="empty-state">Memuat riwayat...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: PENGATURAN KONEKSI & FOLDER -->
+    <section id="view-folders" class="view-section">
+      <div class="card">
+        <div class="card-title">
+          <span>Koneksi Backend Google Apps Script</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="gas-url-input">URL Web App GAS (akhiran <code>/exec</code>)</label>
+          <input type="url" id="gas-url-input" class="form-control"
+            placeholder="https://script.google.com/macros/s/AKfycbxuFYNYn6aUv3Ba6xICGIPYqfwHq2tFiPLqVGzb-21vxuMFUt72HseEBQJ30mB8RGji/exec">
+          <div class="form-hint">Anda bisa menempel URL Web App GAS di sini atau menanamkannya langsung di variabel
+            <code>GAS_WEBAPP_URL</code> pada <code>index.html</code>.</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveGasUrlConfig()">Simpan &amp;
+            Hubungkan</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="resetGasUrlConfig()">Reset ke Preview</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Tambah Preset Folder Google Drive</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-folder-name">Nama / Label Folder</label>
+          <input type="text" id="new-folder-name" class="form-control" placeholder="Contoh: Arsip Nota Keuangan">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-folder-id">ID Folder atau Link Folder Google Drive</label>
+          <input type="text" id="new-folder-id" class="form-control"
+            placeholder="Tempel Link Folder atau ID Folder Drive">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-folder-note">Keterangan (Opsional)</label>
+          <input type="text" id="new-folder-note" class="form-control" placeholder="Catatan singkat fungsi folder">
+        </div>
+        <button type="button" id="btn-add-folder" class="btn btn-primary btn-block" onclick="addFolderPreset()">
+          ➕ Simpan Folder ke Daftar
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Daftar Folder Tersimpan</span>
+        </div>
+        <div id="folder-list-container">
+          <div class="empty-state">Memuat daftar folder...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation (Mobile-First) -->
+  <nav class="bottom-nav">
+    <button type="button" class="nav-btn active" data-tab="view-camera" onclick="switchTab('view-camera')">
+      <span style="font-size:1.25rem;">📷</span>
+      <span>Kamera</span>
+    </button>
+    <button type="button" class="nav-btn" data-tab="view-pdf" onclick="switchTab('view-pdf')">
+      <span class="nav-badge" id="mobile-nav-badge">0</span>
+      <span style="font-size:1.25rem;">📄</span>
+      <span>Simpan PDF</span>
+    </button>
+    <button type="button" class="nav-btn" data-tab="view-history" onclick="switchTab('view-history')">
+      <span style="font-size:1.25rem;">🗂️</span>
+      <span>Riwayat</span>
+    </button>
+    <button type="button" class="nav-btn" data-tab="view-folders" onclick="switchTab('view-folders')">
+      <span style="font-size:1.25rem;">⚙️</span>
+      <span>Pengaturan</span>
+    </button>
+  </nav>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // =========================================================================
+    // KONFIGURASI BACKEND GOOGLE APPS SCRIPT
+    // TEMPEL URL WEB APP GAS ANDA DI BAWAH INI SEBELUM DEPLOY KE GITHUB/VERCEL
+    // Contoh: 'https://script.google.com/macros/s/AKfycbx.../exec'
+    // =========================================================================
+    const DEFAULT_GAS_WEBAPP_URL = '';
+
+    // =========================================================================
+    // STATE APLIKASI
+    // =========================================================================
+    let photos = [];
+    let folders = [];
+    let historyList = [];
+    let videoStream = null;
+    let currentFacingMode = 'environment';
+    let deferredInstallPrompt = null;
+
+    const DUMMY_FOLDERS = [
+      { id: 'ROOT_SCAN_PDF', name: 'Hasil Scan PDF (Otomatis di Drive)', isDefault: true, note: 'Folder default otomatis' },
+      { id: '1DemoFolderArsip2026', name: 'Arsip Dokumen Kantor', isDefault: false, note: 'Dokumen administrasi' },
+      { id: '1DemoFolderNota2026', name: 'Bukti Nota & Kwitansi', isDefault: false, note: 'Lampiran pengeluaran' }
+    ];
+
+    const DUMMY_HISTORY = [
+      {
+        id: 'REC-001',
+        timestamp: '2026-11-25 14:20',
+        fileName: 'Nota_Pembelian_ATK.pdf',
+        pageCount: 2,
+        folderId: '1DemoFolderNota2026',
+        folderName: 'Bukti Nota & Kwitansi',
+        fileId: '1DemoFileId123',
+        driveLink: 'https://drive.google.com/drive/my-drive',
+        sizeKb: 342
+      }
+    ];
+
+    function getActiveGasUrl() {
+      const saved = (localStorage.getItem('scanpdf_gas_url') || '').trim();
+      return saved || DEFAULT_GAS_WEBAPP_URL.trim();
+    }
+
+    function isPreviewMode() {
+      return !getActiveGasUrl();
+    }
+
+    // =========================================================================
+    // INISIALISASI PWA (SERVICE WORKER & INSTALL PROMPT)
+    // =========================================================================
+    function initPWA() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => { });
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        const banner = document.getElementById('install-banner');
+        if (banner) banner.style.display = 'block';
+      });
+
+      document.getElementById('btn-install-pwa').addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showToast('Aplikasi sedang dipasang...');
+        }
+        deferredInstallPrompt = null;
+        document.getElementById('install-banner').style.display = 'none';
+      });
+
+      document.getElementById('btn-dismiss-install').addEventListener('click', () => {
+        document.getElementById('install-banner').style.display = 'none';
+      });
+    }
+
+    // =========================================================================
+    // LIFECYCLE
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      initPWA();
+      document.getElementById('gas-url-input').value = getActiveGasUrl();
+      updateModeBadge();
+      setDefaultFilename();
+      updateNetworkStatus();
+      loadInitialData();
+
+      window.addEventListener('online', updateNetworkStatus);
+      window.addEventListener('offline', updateNetworkStatus);
+    });
+
+    function updateModeBadge() {
+      const badge = document.getElementById('mode-badge');
+      const warnBanner = document.getElementById('gas-warning-banner');
+      if (isPreviewMode()) {
+        badge.textContent = 'Preview Mode';
+        warnBanner.style.display = 'block';
+      } else {
+        badge.textContent = 'Terhubung GAS';
+        warnBanner.style.display = 'none';
+      }
+    }
+
+    function updateNetworkStatus() {
+      const offlineBadge = document.getElementById('offline-badge');
+      offlineBadge.style.display = navigator.onLine ? 'none' : 'inline-block';
+    }
+
+    function setDefaultFilename() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+      document.getElementById('pdf-filename').value = `Dokumen_${stamp}`;
+    }
+
+    function saveGasUrlConfig() {
+      const val = document.getElementById('gas-url-input').value.trim();
+      if (val && !val.startsWith('https://script.google.com/')) {
+        showToast('URL tidak valid. Harus diawali https://script.google.com/...');
+        return;
+      }
+      localStorage.setItem('scanpdf_gas_url', val);
+      updateModeBadge();
+      loadInitialData();
+      showToast(val ? 'URL GAS disimpan & dihubungkan!' : 'Kembali ke Preview Mode.');
+    }
+
+    function resetGasUrlConfig() {
+      localStorage.removeItem('scanpdf_gas_url');
+      document.getElementById('gas-url-input').value = DEFAULT_GAS_WEBAPP_URL;
+      updateModeBadge();
+      loadInitialData();
+      showToast('Pengaturan URL direset.');
+    }
+
+    // =========================================================================
+    // NAVIGASI TAB
+    // =========================================================================
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-section').forEach((el) => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      document.querySelectorAll('.desktop-tab-btn, .nav-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+
+      if (tabId !== 'view-camera') {
+        stopCamera();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // =========================================================================
+    // KAMERA & PENGOLAHAN FOTO
+    // =========================================================================
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('Kamera langsung tidak didukung browser ini. Gunakan tombol Kamera Bawaan HP.');
+        return;
+      }
+
+      try {
+        stopCamera();
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: currentFacingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        });
+        const video = document.getElementById('camera-video');
+        video.srcObject = videoStream;
+        video.style.display = 'block';
+        document.getElementById('camera-placeholder').style.display = 'none';
+        document.getElementById('camera-live-controls').style.display = 'flex';
+      } catch (err) {
+        showToast('Izin kamera ditolak atau tidak tersedia (' + err.name + '). Pastikan situs dibuka via HTTPS.');
+      }
+    }
+
+    function stopCamera() {
+      if (videoStream) {
+        videoStream.getTracks().forEach((track) => track.stop());
+        videoStream = null;
+      }
+      const video = document.getElementById('camera-video');
+      video.srcObject = null;
+      video.style.display = 'none';
+      document.getElementById('camera-placeholder').style.display = 'block';
+      document.getElementById('camera-live-controls').style.display = 'none';
+    }
+
+    function switchCameraFacing() {
+      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+      startCamera();
+    }
+
+    function captureFromVideo() {
+      const video = document.getElementById('camera-video');
+      if (!video.videoWidth) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      addPhotoItem(dataUrl, canvas.width, canvas.height);
+      showToast(`Foto halaman ke-${photos.length} berhasil diambil`);
+    }
+
+    function handleFileSelect(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      files.forEach((file) => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 2200;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              const ratio = Math.min(maxDim / w, maxDim / h);
+              w = Math.round(w * ratio);
+              h = Math.round(h * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            addPhotoItem(canvas.toDataURL('image/jpeg', 0.92), w, h);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      event.target.value = '';
+    }
+
+    function addPhotoItem(dataUrl, width, height) {
+      photos.push({
+        id: 'PH-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        dataUrl,
+        width,
+        height
+      });
+      renderPhotoQueue();
+    }
+
+    function rotatePhoto(index) {
+      const item = photos[index];
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.height;
+        canvas.height = img.width;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        item.dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        item.width = canvas.width;
+        item.height = canvas.height;
+        renderPhotoQueue();
+      };
+      img.src = item.dataUrl;
+    }
+
+    function movePhoto(index, dir) {
+      const target = index + dir;
+      if (target < 0 || target >= photos.length) return;
+      const temp = photos[index];
+      photos[index] = photos[target];
+      photos[target] = temp;
+      renderPhotoQueue();
+    }
+
+    function deletePhoto(index) {
+      photos.splice(index, 1);
+      renderPhotoQueue();
+    }
+
+    function clearAllPhotos() {
+      photos = [];
+      renderPhotoQueue();
+    }
+
+    function renderPhotoQueue() {
+      const container = document.getElementById('photo-queue-container');
+      const countText = document.getElementById('photo-counter-text');
+      const btnClear = document.getElementById('btn-clear-photos');
+      const btnNext = document.getElementById('btn-next-pdf');
+      const mobileBadge = document.getElementById('mobile-nav-badge');
+
+      countText.textContent = `${photos.length} halaman`;
+      document.querySelectorAll('.count-label').forEach((el) => el.textContent = photos.length);
+
+      if (photos.length > 0) {
+        mobileBadge.style.display = 'flex';
+        mobileBadge.textContent = photos.length;
+        btnClear.style.display = 'inline-flex';
+        btnNext.style.display = 'inline-flex';
+      } else {
+        mobileBadge.style.display = 'none';
+        btnClear.style.display = 'none';
+        btnNext.style.display = 'none';
+        container.innerHTML = '<div class="empty-state">Belum ada foto yang diambil. Anda bisa mengambil beberapa foto untuk digabung menjadi 1 file PDF.</div>';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'photo-grid';
+
+      photos.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'photo-item';
+        card.innerHTML = `
+          <div class="photo-thumb-wrap">
+            <img src="${p.dataUrl}" alt="Halaman ${idx + 1}">
+            <span class="page-badge">Hal ${idx + 1}</span>
+          </div>
+          <div class="photo-actions">
+            <button type="button" class="photo-act-btn" onclick="movePhoto(${idx}, -1)" title="Geser Kiri">◀</button>
+            <button type="button" class="photo-act-btn" onclick="rotatePhoto(${idx})" title="Putar 90°">↻</button>
+            <button type="button" class="photo-act-btn" onclick="movePhoto(${idx}, 1)" title="Geser Kanan">▶</button>
+            <button type="button" class="photo-act-btn del" onclick="deletePhoto(${idx})" title="Hapus">🗑️</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      container.innerHTML = '';
+      container.appendChild(grid);
+    }
+
+    // =========================================================================
+    // KONVERSI FOTO KE PDF
+    // =========================================================================
+    function recompressDataUrl(dataUrl, quality) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          resolve({
+            dataUrl: canvas.toDataURL('image/jpeg', quality),
+            width: img.width,
+            height: img.height
+          });
+        };
+        img.src = dataUrl;
+      });
+    }
+
+    async function buildPdfBlob() {
+      if (photos.length === 0) {
+        throw new Error('Silakan ambil atau pilih minimal 1 foto terlebih dahulu.');
+      }
+
+      const paperSize = document.getElementById('pdf-paper-size').value;
+      const orientationPref = document.getElementById('pdf-orientation').value;
+      const quality = parseFloat(document.getElementById('pdf-quality').value);
+
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        throw new Error('Library jsPDF gagal dimuat. Pastikan koneksi internet aktif.');
+      }
+
+      const { jsPDF } = window.jspdf;
+      let doc = null;
+
+      for (let i = 0; i < photos.length; i++) {
+        const compressed = await recompressDataUrl(photos[i].dataUrl, quality);
+        const imgW = compressed.width;
+        const imgH = compressed.height;
+
+        let orient = orientationPref;
+        if (orient === 'auto') {
+          orient = imgW > imgH ? 'landscape' : 'portrait';
+        }
+
+        const format = paperSize === 'fit' ? [imgW * 0.264583, imgH * 0.264583] : paperSize;
+
+        if (i === 0) {
+          doc = new jsPDF({ orientation: orient, unit: 'mm', format: format });
+        } else {
+          doc.addPage(format, orient);
+        }
+
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+
+        if (paperSize === 'fit') {
+          doc.addImage(compressed.dataUrl, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
+        } else {
+          const margin = 8;
+          const availW = pageW - margin * 2;
+          const availH = pageH - margin * 2;
+          const ratio = Math.min(availW / imgW, availH / imgH);
+          const drawW = imgW * ratio;
+          const drawH = imgH * ratio;
+          const offsetX = (pageW - drawW) / 2;
+          const offsetY = (pageH - drawH) / 2;
+          doc.addImage(compressed.dataUrl, 'JPEG', offsetX, offsetY, drawW, drawH, undefined, 'FAST');
+        }
+      }
+
+      return doc.output('blob');
+    }
+
+    function getSanitizedFilename() {
+      let raw = document.getElementById('pdf-filename').value.trim();
+      if (!raw) {
+        setDefaultFilename();
+        raw = document.getElementById('pdf-filename').value.trim();
+      }
+      raw = raw.replace(/[\\/:*?"<>|]/g, '_');
+      if (!raw.toLowerCase().endsWith('.pdf')) {
+        raw += '.pdf';
+      }
+      return raw;
+    }
+
+    function extractDriveFolderId(input) {
+      const val = (input || '').trim();
+      if (!val) return '';
+      const match = val.match(/folders\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) return match[1];
+      const idParam = val.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (idParam && idParam[1]) return idParam[1];
+      return val;
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const res = reader.result || '';
+          resolve(res.split(',')[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function generateAndDownloadLocal() {
+      const btn = document.getElementById('btn-download-local');
+      btn.disabled = true;
+      btn.textContent = 'Memproses PDF...';
+      try {
+        const blob = await buildPdfBlob();
+        const fileName = getSanitizedFilename();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`File ${fileName} berhasil diunduh!`);
+      } catch (err) {
+        showToast(err.message || 'Gagal membuat PDF.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⬇️ Unduh PDF ke Perangkat Saja';
+      }
+    }
+
+    async function generateAndSaveToDrive() {
+      if (!navigator.onLine && !isPreviewMode()) {
+        showToast('Perangkat sedang offline. Sambungkan internet untuk menyimpan ke Google Drive.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-drive');
+      btn.disabled = true;
+      btn.textContent = '⏳ Mengonversi & Mengunggah...';
+      document.getElementById('upload-result-card').style.display = 'none';
+
+      try {
+        const selectEl = document.getElementById('drive-folder-select');
+        let folderId = selectEl.value;
+        let folderName = selectEl.options[selectEl.selectedIndex]?.text || 'Folder Drive';
+
+        if (folderId === '__MANUAL__') {
+          const manualRaw = document.getElementById('manual-folder-input').value;
+          folderId = extractDriveFolderId(manualRaw);
+          if (!folderId) {
+            throw new Error('Silakan masukkan ID atau Link Folder Google Drive.');
+          }
+          folderName = 'Folder Kustom';
+        }
+
+        const blob = await buildPdfBlob();
+        const base64Pdf = await blobToBase64(blob);
+        const fileName = getSanitizedFilename();
+        const sizeKb = Math.max(1, Math.round(blob.size / 1024));
+
+        const payload = {
+          fileName,
+          base64Pdf,
+          folderId,
+          folderName,
+          pageCount: photos.length,
+          sizeKb
+        };
+
+        const res = await callBackend('savePdfToDrive', payload);
+        if (!res || !res.success) {
+          throw new Error((res && res.message) || 'Gagal menyimpan file ke Google Drive.');
+        }
+
+        document.getElementById('upload-result-text').textContent =
+          `File "${res.record.fileName}" (${res.record.pageCount} halaman, ${res.record.sizeKb} KB) telah disimpan di folder "${res.record.folderName}".`;
+        document.getElementById('upload-result-link').href = res.record.driveLink;
+        document.getElementById('upload-result-card').style.display = 'block';
+
+        historyList.unshift(res.record);
+        renderHistoryList();
+        showToast('Berhasil disimpan ke Google Drive!');
+      } catch (err) {
+        showToast(err.message || 'Terjadi kesalahan saat menyimpan.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '☁️ Konversi & Simpan ke Google Drive';
+      }
+    }
+
+    function startNewScan() {
+      photos = [];
+      renderPhotoQueue();
+      setDefaultFilename();
+      document.getElementById('upload-result-card').style.display = 'none';
+      switchTab('view-camera');
+    }
+
+    // =========================================================================
+    // BRIDGE KOMUNIKASI HTTP FETCH KE GAS WEB APP API
+    // =========================================================================
+    async function callBackend(fnName, payload) {
+      const gasUrl = getActiveGasUrl();
+      if (!gasUrl) {
+        return handlePreviewBackend(fnName, payload);
+      }
+
+      if (fnName === 'getInitialData') {
+        const res = await fetch(`${gasUrl}?action=getInitialData`, {
+          method: 'GET',
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP Error ' + res.status);
+        return await res.json();
+      }
+
+      // Gunakan text/plain agar tidak memicu CORS OPTIONS preflight di GAS
+      const res = await fetch(gasUrl, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: fnName, payload: payload })
+      });
+      if (!res.ok) throw new Error('HTTP Error ' + res.status);
+      return await res.json();
+    }
+
+    function handlePreviewBackend(fnName, payload) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (fnName === 'getInitialData') {
+            const savedFolders = JSON.parse(localStorage.getItem('preview_folders') || 'null');
+            const savedHistory = JSON.parse(localStorage.getItem('preview_history') || 'null');
+            resolve({
+              success: true,
+              folders: savedFolders || DUMMY_FOLDERS,
+              history: savedHistory || DUMMY_HISTORY
+            });
+          } else if (fnName === 'savePdfToDrive') {
+            const now = new Date();
+            const record = {
+              id: 'REC-' + Date.now(),
+              timestamp: now.toISOString().slice(0, 16).replace('T', ' '),
+              fileName: payload.fileName,
+              pageCount: payload.pageCount,
+              folderId: payload.folderId,
+              folderName: payload.folderName,
+              fileId: 'PREVIEW_FILE_' + Date.now(),
+              driveLink: 'https://drive.google.com/drive/my-drive',
+              sizeKb: payload.sizeKb
+            };
+            const list = [record, ...historyList];
+            localStorage.setItem('preview_history', JSON.stringify(list));
+            resolve({ success: true, record });
+          } else if (fnName === 'saveFolderSetting') {
+            const existing = folders.find((f) => f.id === payload.id);
+            if (!existing) {
+              folders.push({
+                id: payload.id,
+                name: payload.name,
+                isDefault: folders.length === 0,
+                note: payload.note || ''
+              });
+            }
+            localStorage.setItem('preview_folders', JSON.stringify(folders));
+            resolve({ success: true, folders });
+          } else if (fnName === 'setDefaultFolder') {
+            folders = folders.map((f) => ({ ...f, isDefault: f.id === payload }));
+            localStorage.setItem('preview_folders', JSON.stringify(folders));
+            resolve({ success: true, folders });
+          } else if (fnName === 'deleteFolderSetting') {
+            folders = folders.filter((f) => f.id !== payload);
+            localStorage.setItem('preview_folders', JSON.stringify(folders));
+            resolve({ success: true, folders });
+          }
+        }, 300);
+      });
+    }
+
+    async function loadInitialData() {
+      try {
+        const res = await callBackend('getInitialData');
+        if (res && res.success) {
+          folders = res.folders || [];
+          historyList = res.history || [];
+          renderFolderSelect();
+          renderFolderList();
+          renderHistoryList();
+        }
+      } catch (err) {
+        showToast('Gagal memuat data GAS: ' + err.message);
+      }
+    }
+
+    function onFolderSelectChange() {
+      const val = document.getElementById('drive-folder-select').value;
+      document.getElementById('manual-folder-group').style.display = val === '__MANUAL__' ? 'block' : 'none';
+    }
+
+    function renderFolderSelect() {
+      const select = document.getElementById('drive-folder-select');
+      select.innerHTML = '';
+
+      if (folders.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = 'ROOT_SCAN_PDF';
+        opt.textContent = 'Hasil Scan PDF (Otomatis di Drive)';
+        select.appendChild(opt);
+      } else {
+        folders.forEach((f) => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = f.isDefault ? `${f.name} (Default)` : f.name;
+          if (f.isDefault) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      const manualOpt = document.createElement('option');
+      manualOpt.value = '__MANUAL__';
+      manualOpt.textContent = '+ Masukkan ID / Link Folder Lain...';
+      select.appendChild(manualOpt);
+      onFolderSelectChange();
+    }
+
+    function renderFolderList() {
+      const container = document.getElementById('folder-list-container');
+      if (folders.length === 0) {
+        container.innerHTML = '<div class="empty-state">Belum ada folder tersimpan.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      folders.forEach((f) => {
+        const el = document.createElement('div');
+        el.className = 'folder-item';
+        el.innerHTML = `
+          <div>
+            <strong>${escapeHtml(f.name)}</strong>
+            ${f.isDefault ? '<span class="badge-default">Default</span>' : ''}
+            <div class="history-meta">ID: <code>${escapeHtml(f.id)}</code> ${f.note ? '• ' + escapeHtml(f.note) : ''}</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            ${!f.isDefault ? `<button type="button" class="btn btn-outline btn-sm" onclick="makeDefaultFolder('${escapeHtml(f.id)}')">Jadikan Default</button>` : ''}
+            ${f.id !== 'ROOT_SCAN_PDF' ? `<button type="button" class="btn btn-danger-soft btn-sm" onclick="removeFolder('${escapeHtml(f.id)}')">Hapus</button>` : ''}
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('history-list-container');
+      if (historyList.length === 0) {
+        container.innerHTML = '<div class="empty-state">Belum ada riwayat dokumen PDF yang disimpan.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      historyList.forEach((item) => {
+        const el = document.createElement('div');
+        el.className = 'history-item';
+        el.innerHTML = `
+          <div class="history-info">
+            <h4>📄 ${escapeHtml(item.fileName)}</h4>
+            <div class="history-meta">
+              ${escapeHtml(item.timestamp)} • ${item.pageCount} hal • ${item.sizeKb} KB • Folder: <strong>${escapeHtml(item.folderName)}</strong>
+            </div>
+          </div>
+          <div class="history-actions">
+            <a href="${escapeHtml(item.driveLink)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Buka Drive</a>
+            <button type="button" class="btn btn-outline btn-sm" onclick="copyText('${escapeHtml(item.driveLink)}')">Salin Link</button>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    async function addFolderPreset() {
+      const name = document.getElementById('new-folder-name').value.trim();
+      const rawId = document.getElementById('new-folder-id').value.trim();
+      const note = document.getElementById('new-folder-note').value.trim();
+      const id = extractDriveFolderId(rawId);
+
+      if (!name || !id) {
+        showToast('Nama folder dan ID/Link Folder wajib diisi.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-add-folder');
+      btn.disabled = true;
+      btn.textContent = 'Memvalidasi Folder...';
+
+      try {
+        const res = await callBackend('saveFolderSetting', { id, name, note });
+        if (!res || !res.success) {
+          throw new Error((res && res.message) || 'Gagal menyimpan folder.');
+        }
+        folders = res.folders;
+        renderFolderSelect();
+        renderFolderList();
+        document.getElementById('new-folder-name').value = '';
+        document.getElementById('new-folder-id').value = '';
+        document.getElementById('new-folder-note').value = '';
+        showToast('Folder berhasil ditambahkan!');
+      } catch (err) {
+        showToast(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '➕ Simpan Folder ke Daftar';
+      }
+    }
+
+    async function makeDefaultFolder(folderId) {
+      try {
+        const res = await callBackend('setDefaultFolder', folderId);
+        if (res && res.success) {
+          folders = res.folders;
+          renderFolderSelect();
+          renderFolderList();
+          showToast('Folder default diperbarui.');
+        }
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    async function removeFolder(folderId) {
+      try {
+        const res = await callBackend('deleteFolderSetting', folderId);
+        if (res && res.success) {
+          folders = res.folders;
+          renderFolderSelect();
+          renderFolderList();
+          showToast('Folder dihapus dari daftar.');
+        }
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    // =========================================================================
+    // UTILITAS UI
+    // =========================================================================
+    function copyText(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => showToast('Link disalin ke clipboard!'));
+      } else {
+        showToast('Salin manual: ' + text);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.remove('show');
+      }, 3200);
+    }
+  </script>
+</body>
+
+</html>
